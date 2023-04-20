@@ -32,4 +32,4 @@ stage('8.EmailNotification'){
  Francois''', recipientProviders: [contributor(), developers()], subject: 'Project Status', to: 'fyoumb@gmail.com'
  } 
 }
-}
+
