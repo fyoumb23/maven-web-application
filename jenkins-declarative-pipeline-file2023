@@ -1,0 +1,63 @@
+pipeline{
+  agent {
+    label 'Master'
+  }
+  tools {
+    maven 'Maven3.9.1'
+  }
+  //options{}
+  //triggers{}
+  stages {
+    stage('1Clone'){
+      steps{
+        sh "echo 'cloning the latest application version' "
+        git "https://github.com/fyoumb23/maven-web-application"
+        sh "echo 'latest application version available for testing and build' "
+      }
+    }
+    stage('2TestBuild'){
+      steps{
+        sh "echo 'running JUnit-test-cases' "
+        sh "echo 'testing must passed to create artifacts ' "
+        sh "mvn clean package" 
+      }
+      
+  }
+  stage('3CodeQualityAnalysis') {
+    steps{
+        sh "echo setup sonarQube authentication"
+        sh "echo 'Perfoming CodeQualityAnalysis' "
+        sh "mvn sonar:sonar"      
+    }
+      
+  }
+  stage('4UploadArtifacts') {
+    steps{
+      sh "echo configure nexus authentication"
+      sh "mvn deploy"
+      sh "echo artifacts uploaded"
+    }
+   } 
+  stage('Deploy2Prod'){
+      steps{ deploy adapters: [tomcat9(credentialsId: 'tomcat-credentials', path: '', url: 'http://172.31.93.0:8080')], contextPath: null, war: 'target/*.war'
+  }
+ }
+}
+post{
+    always{emailext body: '''Hello Team, The deployment is complete.
+Thanks,
+Francois''', subject: 'Build Status', to: 'fyoumb@yahoo.com'}
+    success{emailext body: '''Hello Team,
+
+The deployment is successfully completed.
+
+Thanks,
+Francois''', subject: 'Deployment Success', to: 'fyoumb@yahoo.com'}
+    failure{emailext body: '''Hello Team,
+
+The deployment failed.
+
+Thanks,
+Francois''', subject: 'Deployment Failure', to: 'fyoumb@yahoo.com'}
+}
+}
